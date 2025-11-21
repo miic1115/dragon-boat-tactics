@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>龍舟戰術板 V5 - 完美解析版</title>
+    <title>龍舟戰術板 V7 - 全能槳手版</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -57,6 +57,7 @@
             padding-right: 2.5rem;
             -webkit-appearance: none; appearance: none;
         }
+        option { color: white; background-color: #0f172a; padding: 8px; }
     </style>
 </head>
 <body>
@@ -66,7 +67,7 @@
         <div class="flex justify-between items-center mb-2">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-dragon text-dragon-accent text-xl"></i>
-                <h1 class="font-bold text-base tracking-wider">戰術板 V5</h1>
+                <h1 class="font-bold text-base tracking-wider">戰術板 V7</h1>
             </div>
             <div class="flex gap-2">
                 <button @click="clearAllBoats" class="bg-slate-700 text-red-400 px-2 py-1 rounded text-xs border border-slate-600 active:bg-slate-600">
@@ -190,11 +191,6 @@
                           selectedFrom === 'bench' && selectedIndex === index ? 'ring-2 ring-dragon-accent bg-slate-700 z-10' : 'hover:bg-slate-700',
                           isOnBoat(paddler.id) ? 'opacity-30 grayscale' : '']">
                 <div class="text-xs font-bold truncate w-full">{{ paddler.name }}</div>
-                <div class="text-[9px] mt-0.5 scale-90 font-bold">
-                    <span v-if="paddler.side === 'left'" class="text-blue-400">Left</span>
-                    <span v-else-if="paddler.side === 'right'" class="text-green-400">Right</span>
-                    <span v-else class="text-purple-400">Both/Helm</span>
-                </div>
                 <div v-if="isOnBoat(paddler.id)" class="absolute inset-0 flex items-center justify-center">
                     <i class="fa-solid fa-check text-dragon-success text-lg drop-shadow-md"></i>
                 </div>
@@ -228,27 +224,18 @@
             </div>
 
             <div v-if="syncMethod === 'file'">
-                <p class="text-xs text-slate-400 mb-3">請上傳您的「出席統計表」CSV 檔案：</p>
+                <p class="text-xs text-slate-400 mb-3">請上傳「出席統計表」CSV：</p>
                 <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-900 hover:bg-slate-800 transition">
                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
                         <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-500 mb-2"></i>
-                        <p class="text-sm text-slate-400"><span class="font-bold">點擊上傳</span> 或拖放檔案</p>
-                        <p class="text-xs text-slate-500">支援 CSV 格式</p>
+                        <p class="text-sm text-slate-400"><span class="font-bold">點擊上傳</span> CSV</p>
                     </div>
                     <input type="file" class="hidden" accept=".csv" @change="handleFileUpload" />
                 </label>
             </div>
 
             <div v-if="syncMethod === 'url'">
-                <div class="bg-blue-500/10 border border-blue-500/20 p-3 rounded mb-4 text-xs text-blue-200">
-                    <p class="font-bold mb-1">🔥 如何設定：</p>
-                    <ol class="list-decimal list-inside space-y-1 opacity-80">
-                        <li>Google Sheets > 檔案 > 共用 > <strong>發布到網路</strong></li>
-                        <li>選擇統計表分頁，格式選 <strong>CSV</strong></li>
-                        <li>貼上連結</li>
-                    </ol>
-                </div>
-                <input v-model="csvUrl" placeholder="貼上 https://docs.google.com/...output=csv" 
+                <input v-model="csvUrl" placeholder="貼上 Google Sheets CSV 連結" 
                        class="w-full bg-slate-900 p-3 rounded border border-slate-700 text-sm text-white focus:outline-none focus:border-dragon-accent mb-3">
                 <button @click="fetchCsvFromUrl" :disabled="isLoading" class="w-full py-3 rounded bg-dragon-accent text-black font-bold shadow-lg shadow-cyan-500/20 flex justify-center items-center gap-2">
                     <i v-if="isLoading" class="fa-solid fa-circle-notch fa-spin"></i>
@@ -257,8 +244,7 @@
             </div>
 
             <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between items-center">
-                <span class="text-xs text-slate-500" v-if="lastSyncTime">上次同步: {{ lastSyncTime }}</span>
-                <span class="text-xs text-slate-500" v-else>尚未同步</span>
+                <span class="text-xs text-slate-500" v-if="lastSyncTime">上次: {{ lastSyncTime }}</span>
                 <button @click="clearStorage" class="text-xs text-red-400 hover:text-red-300">清除設定</button>
             </div>
         </div>
@@ -273,11 +259,7 @@
             <input ref="nameInput" v-model="newPaddlerName" placeholder="輸入姓名..." 
                    class="w-full bg-slate-900 p-4 rounded-lg border border-slate-700 mb-4 text-white text-lg focus:outline-none focus:border-dragon-accent placeholder-slate-600"
                    @keyup.enter="confirmAddPaddler">
-            <div class="grid grid-cols-3 gap-2 mb-6">
-                <button @click="newPaddlerSide = 'left'" :class="['py-3 rounded-lg border text-sm font-bold transition', newPaddlerSide==='left'?'bg-dragon-water text-white border-dragon-water':'bg-slate-800 border-slate-600 text-slate-400']">左槳</button>
-                <button @click="newPaddlerSide = 'right'" :class="['py-3 rounded-lg border text-sm font-bold transition', newPaddlerSide==='right'?'bg-green-600 text-white border-green-600':'bg-slate-800 border-slate-600 text-slate-400']">右槳</button>
-                <button @click="newPaddlerSide = 'both'" :class="['py-3 rounded-lg border text-sm font-bold transition', newPaddlerSide==='both'?'bg-purple-600 text-white border-purple-600':'bg-slate-800 border-slate-600 text-slate-400']">不限</button>
-            </div>
+            
             <div class="flex gap-3">
                 <button @click="showAddPaddlerModal = false" class="flex-1 py-3 rounded-lg bg-slate-700 font-bold text-slate-300">取消</button>
                 <button @click="confirmAddPaddler" class="flex-1 py-3 rounded-lg bg-dragon-accent text-black font-bold shadow-lg shadow-cyan-500/20">確認</button>
@@ -316,23 +298,37 @@
     </div>
 
     <div v-if="selectedFrom" class="fixed bottom-6 left-4 right-4 z-50 flex gap-2 justify-center animate-slide-up max-w-md mx-auto">
-        <div class="bg-slate-800 text-white px-4 py-3 rounded-lg shadow-xl border border-slate-600 flex flex-col justify-center items-start flex-1 min-w-0">
-            <span class="text-[10px] text-slate-400 uppercase tracking-wider">已選取</span>
-            <span class="font-bold truncate w-full text-dragon-accent flex items-center text-sm">
-                <i class="fa-solid fa-check-circle mr-2"></i> {{ getSelectedName() }}
-            </span>
+        
+        <div v-if="isSelectedEmptySeat()" class="flex-1 flex gap-2 items-center bg-slate-800 p-2 rounded-lg shadow-xl border border-slate-600">
+            <div class="flex-1 relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <i class="fa-solid fa-user-plus text-dragon-success"></i>
+                </div>
+                <select @change="quickPlacePaddler($event)" class="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-lg focus:ring-dragon-success focus:border-dragon-success block pl-9 p-2.5 appearance-none">
+                    <option selected disabled value="">快速入座 ({{ availableBench.length }}人待命)</option>
+                    <option value="NEW">+ 新增臨時人員</option>
+                    <option v-for="p in availableBench" :key="p.id" :value="JSON.stringify(p)">{{ p.name }}</option>
+                </select>
+            </div>
+            <button @click="cancelSelection" class="bg-slate-600 text-white w-10 h-10 rounded flex items-center justify-center hover:bg-slate-500">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
-        <button v-if="isSelectedEmptySeat()" @click="openAddPaddlerModal('seat')" 
-                class="bg-dragon-success text-white px-4 py-3 rounded-lg shadow-xl font-bold hover:bg-green-600 transition flex items-center gap-2 whitespace-nowrap">
-            <i class="fa-solid fa-plus"></i> <span class="hidden xs:inline">入座</span>
-        </button>
-        <button v-if="isSelectedOnBoat() && !isSelectedEmptySeat()" @click="removeSelectedFromBoat" 
-                class="bg-dragon-danger text-white px-4 py-3 rounded-lg shadow-xl font-bold hover:bg-red-600 transition flex items-center gap-2 whitespace-nowrap">
-            <i class="fa-solid fa-arrow-down"></i> <span class="hidden xs:inline">下船</span>
-        </button>
-        <button @click="cancelSelection" class="bg-slate-600 text-white px-4 py-3 rounded-lg shadow-xl font-bold whitespace-nowrap active:bg-slate-500">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
+
+        <div v-else class="flex gap-2 w-full">
+            <div class="bg-slate-800 text-white px-4 py-3 rounded-lg shadow-xl border border-slate-600 flex flex-col justify-center items-start flex-1 min-w-0">
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider">已選取</span>
+                <span class="font-bold truncate w-full text-dragon-accent flex items-center text-sm">
+                    <i class="fa-solid fa-check-circle mr-2"></i> {{ getSelectedName() }}
+                </span>
+            </div>
+            <button @click="removeSelectedFromBoat" class="bg-dragon-danger text-white px-4 py-3 rounded-lg shadow-xl font-bold hover:bg-red-600 transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-arrow-down"></i> <span class="hidden xs:inline">下船</span>
+            </button>
+            <button @click="cancelSelection" class="bg-slate-600 text-white px-4 py-3 rounded-lg shadow-xl font-bold whitespace-nowrap active:bg-slate-500">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
     </div>
 
 </div>
@@ -369,7 +365,6 @@
             const addMode = ref('bench');
             const nameInput = ref(null);
             const newPaddlerName = ref('');
-            const newPaddlerSide = ref('both');
             const newBoatName = ref('');
             const newBoatType = ref('big');
             const selectedFrom = ref(null); 
@@ -396,18 +391,54 @@
                 }
             });
 
-            // --- New CSV Logic (Vertical Roster) ---
+            // --- Helper: Check if paddler is on ANY boat ---
+            const isOnBoat = (paddlerId) => {
+                for (const boat of boats.value) {
+                    if (boat.seats.drummer?.id === paddlerId) return true;
+                    if (boat.seats.steersman?.id === paddlerId) return true;
+                    if (boat.seats.left.some(p => p?.id === paddlerId)) return true;
+                    if (boat.seats.right.some(p => p?.id === paddlerId)) return true;
+                }
+                return false;
+            };
+
+            // --- Computed: Available Bench Players (Not on boat) ---
+            const availableBench = computed(() => {
+                return bench.value.filter(p => !isOnBoat(p.id));
+            });
+
+            // --- Quick Place Logic ---
+            const quickPlacePaddler = (event) => {
+                const value = event.target.value;
+                if (value === "NEW") {
+                    openAddPaddlerModal('seat');
+                    event.target.value = ""; // Reset select
+                    return;
+                }
+                
+                if (!value) return;
+
+                try {
+                    const paddler = JSON.parse(value);
+                    const boat = boats.value[selectedBoatIndex.value];
+                    
+                    if (['drummer', 'steersman'].includes(selectedFrom.value)) {
+                        boat.seats[selectedFrom.value] = paddler;
+                    } else {
+                        boat.seats[selectedFrom.value][selectedIndex.value] = paddler;
+                    }
+                    cancelSelection();
+                } catch (e) {
+                    console.error("Quick place error", e);
+                }
+            };
+
+            // --- CSV / Sync Logic ---
             const handleFileUpload = (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
-                
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    const text = e.target.result;
-                    processCsvText(text);
-                    showSyncModal.value = false;
-                    alert("檔案讀取成功！");
-                };
+                reader.onload = (e) => { processCsvText(e.target.result); showSyncModal.value = false; alert("檔案讀取成功！"); };
                 reader.readAsText(file);
             };
 
@@ -420,150 +451,66 @@
             };
 
             const openSyncModal = () => showSyncModal.value = true;
-
             const fetchCsvFromUrl = async () => {
                 if (!csvUrl.value) return;
-                // Using Proxy to allow fetching Google Sheets CSV from localhost/file://
                 const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(csvUrl.value);
-                
                 isLoading.value = true;
                 try {
                     const res = await fetch(proxyUrl);
-                    if (!res.ok) throw new Error("Network response was not ok");
+                    if (!res.ok) throw new Error("Network err");
                     const text = await res.text();
-                    if (!text || text.length < 10) throw new Error("抓取到的資料為空");
-
+                    if (!text || text.length < 10) throw new Error("Empty data");
                     processCsvText(text);
                     localStorage.setItem('dragon_csv_url', csvUrl.value);
                     showSyncModal.value = false;
                     alert("同步成功！");
-
-                } catch (e) {
-                    console.error(e);
-                    alert("同步失敗：" + e.message + "\n\n建議：請改用「上傳檔案」功能，選擇您剛才下載的 CSV。");
-                } finally {
-                    isLoading.value = false;
-                }
+                } catch (e) { alert("同步失敗，請改用檔案上傳。"); } finally { isLoading.value = false; }
             };
-
             const clearStorage = () => {
-                if(!confirm("確定要清除所有同步設定嗎？")) return;
-                localStorage.removeItem('dragon_csv_url');
-                localStorage.removeItem('dragon_csv_data');
-                localStorage.removeItem('dragon_sync_time');
-                attendanceDB.value = {};
-                availableDates.value = [];
-                bench.value = [];
-                selectedDate.value = '';
-                csvUrl.value = '';
-                lastSyncTime.value = '';
+                if(!confirm("清除設定？")) return;
+                localStorage.removeItem('dragon_csv_url'); localStorage.removeItem('dragon_csv_data'); localStorage.removeItem('dragon_sync_time');
+                attendanceDB.value = {}; availableDates.value = []; bench.value = []; selectedDate.value = ''; csvUrl.value = ''; lastSyncTime.value = '';
                 alert("已重置");
             };
 
+            // --- CSV Parsing (Simplified - No Side Logic) ---
             const parseCSV = (csvText) => {
                 const lines = csvText.trim().split(/\r?\n/); 
-                if (lines.length < 10) return; // File too short
-
-                // 1. Find Header Row (Usually Row 0)
+                if (lines.length < 10) return;
                 const headers = lines[0].split(',').map(h => h.trim());
-                
-                // 2. Find Data Start Row (Look for '名單' in Col 0)
-                let startRow = 7; // Default based on your file
-                for(let i=0; i<20; i++) { // Search first 20 lines
-                    if(lines[i] && lines[i].startsWith('名單')) {
-                        startRow = i;
-                        break;
-                    }
-                }
+                let startRow = 7;
+                for(let i=0; i<20; i++) { if(lines[i] && lines[i].startsWith('名單')) { startRow = i; break; } }
 
-                // 3. Build "Side Map" from Col 1 & 2 (Index 1 & 2)
-                // Col 1 = Left (Based on summary '左槳' in Row 0?), Col 2 = Right
-                const sideMap = {};
-                for(let i = startRow; i < lines.length; i++) {
-                    const row = lines[i].split(',').map(c => c.trim());
-                    if (row.length < 3) continue;
-                    
-                    if(row[1] && isName(row[1])) sideMap[row[1]] = 'left';
-                    if(row[2] && isName(row[2])) sideMap[row[2]] = 'right';
-                }
-
-                // 4. Parse Dates (Columns 4 onwards)
                 const db = {};
                 const validDateCols = [];
-                
-                for(let j = 4; j < headers.length; j++) {
-                    if(headers[j]) {
-                        validDateCols.push({ index: j, date: headers[j] });
-                        db[headers[j]] = [];
-                    }
-                }
+                for(let j = 4; j < headers.length; j++) { if(headers[j]) { validDateCols.push({ index: j, date: headers[j] }); db[headers[j]] = []; } }
 
-                // 5. Scan Attendance
                 for(let colObj of validDateCols) {
                     const j = colObj.index;
                     const dateKey = colObj.date;
-                    
                     for(let i = startRow; i < lines.length; i++) {
                         const row = lines[i].split(',').map(c => c.trim());
                         if(row.length <= j) continue;
-                        
                         const name = row[j];
                         if(isName(name)) {
-                            db[dateKey].push({
-                                id: `${name}-${dateKey}-${i}`, // Unique ID
-                                name: name,
-                                side: sideMap[name] || 'both' // Default to both/purple if not in side map
-                            });
+                            db[dateKey].push({ id: `${name}-${dateKey}-${i}`, name: name, side: 'both' });
                         }
                     }
                 }
-
                 attendanceDB.value = db;
-                // Reverse to show newest first
                 availableDates.value = validDateCols.map(d => d.date).reverse();
-
-                if (availableDates.value.length > 0 && !selectedDate.value) {
-                     selectedDate.value = availableDates.value[0];
-                     loadAttendanceForDate();
-                }
+                if (availableDates.value.length > 0 && !selectedDate.value) { selectedDate.value = availableDates.value[0]; loadAttendanceForDate(); }
             };
-
             const isName = (str) => {
                 if(!str) return false;
                 if(['on going', 'NaN', 'undefined', '出席名單'].includes(str)) return false;
-                // Filter out numbers (e.g. counts in row 1-6)
                 if(!isNaN(str) && !isNaN(parseFloat(str))) return false;
                 return true;
             };
 
-            // --- Core Logic ---
-            const loadAttendanceForDate = () => {
-                if (!selectedDate.value || !attendanceDB.value[selectedDate.value]) return;
-                bench.value = JSON.parse(JSON.stringify(attendanceDB.value[selectedDate.value]));
-                cancelSelection();
-            };
-
+            const loadAttendanceForDate = () => { if (!selectedDate.value || !attendanceDB.value[selectedDate.value]) return; bench.value = JSON.parse(JSON.stringify(attendanceDB.value[selectedDate.value])); cancelSelection(); };
             const getAttendanceCount = (date) => attendanceDB.value[date] ? attendanceDB.value[date].length : 0;
-            
-            const clearAllBoats = () => {
-                if(!confirm("確定要清空所有船隻座位嗎？")) return;
-                boats.value.forEach(boat => {
-                    boat.seats.drummer = null;
-                    boat.seats.steersman = null;
-                    boat.seats.left.fill(null);
-                    boat.seats.right.fill(null);
-                });
-            };
-
-            const isOnBoat = (paddlerId) => {
-                for (const boat of boats.value) {
-                    if (boat.seats.drummer?.id === paddlerId) return true;
-                    if (boat.seats.steersman?.id === paddlerId) return true;
-                    if (boat.seats.left.some(p => p?.id === paddlerId)) return true;
-                    if (boat.seats.right.some(p => p?.id === paddlerId)) return true;
-                }
-                return false;
-            };
+            const clearAllBoats = () => { if(!confirm("清空座位？")) return; boats.value.forEach(boat => { boat.seats.drummer=null; boat.seats.steersman=null; boat.seats.left.fill(null); boat.seats.right.fill(null); }); };
 
             // --- Interaction ---
             const getPaddlerName = (paddler) => paddler ? paddler.name : (paddler === null ? '' : '-');
@@ -577,118 +524,44 @@
                 if (content) return 'bg-slate-700 text-white border-slate-500 shadow-md';
                 return 'bg-slate-900/30 text-slate-600 border-dashed border-slate-800 hover:border-slate-600';
             };
-
-            const handleBenchClick = (index) => {
-                if (selectedFrom.value === 'bench' && selectedIndex.value === index) cancelSelection();
-                else if (selectedFrom.value) executeSwap('bench', index, null);
-                else { selectedFrom.value = 'bench'; selectedIndex.value = index; selectedBoatIndex.value = null; }
-            };
-
-            const handleSeatClick = (section, index) => {
-                if (selectedBoatIndex.value === currentBoatIndex.value && selectedFrom.value === section && selectedIndex.value === index) { cancelSelection(); return; }
-                if (selectedFrom.value) executeSwap(section, index, currentBoatIndex.value);
-                else { selectedFrom.value = section; selectedIndex.value = index; selectedBoatIndex.value = currentBoatIndex.value; }
-            };
-
+            const handleBenchClick = (index) => { if (selectedFrom.value === 'bench' && selectedIndex.value === index) cancelSelection(); else if (selectedFrom.value) executeSwap('bench', index, null); else { selectedFrom.value = 'bench'; selectedIndex.value = index; selectedBoatIndex.value = null; } };
+            const handleSeatClick = (section, index) => { if (selectedBoatIndex.value === currentBoatIndex.value && selectedFrom.value === section && selectedIndex.value === index) { cancelSelection(); return; } if (selectedFrom.value) executeSwap(section, index, currentBoatIndex.value); else { selectedFrom.value = section; selectedIndex.value = index; selectedBoatIndex.value = currentBoatIndex.value; } };
+            
             const executeSwap = (targetSection, targetIndex, targetBoatIdx) => {
                 let sourceVal, targetVal;
                 if (selectedFrom.value === 'bench') sourceVal = bench.value[selectedIndex.value];
-                else {
-                    const srcBoat = boats.value[selectedBoatIndex.value];
-                    sourceVal = ['drummer', 'steersman'].includes(selectedFrom.value) ? srcBoat.seats[selectedFrom.value] : srcBoat.seats[selectedFrom.value][selectedIndex.value];
-                }
+                else { const srcBoat = boats.value[selectedBoatIndex.value]; sourceVal = ['drummer', 'steersman'].includes(selectedFrom.value) ? srcBoat.seats[selectedFrom.value] : srcBoat.seats[selectedFrom.value][selectedIndex.value]; }
                 if (targetSection === 'bench') targetVal = bench.value[targetIndex];
-                else {
-                    const tgtBoat = boats.value[targetBoatIdx];
-                    targetVal = ['drummer', 'steersman'].includes(targetSection) ? tgtBoat.seats[targetSection] : tgtBoat.seats[targetSection][targetIndex];
-                }
-
+                else { const tgtBoat = boats.value[targetBoatIdx]; targetVal = ['drummer', 'steersman'].includes(targetSection) ? tgtBoat.seats[targetSection] : tgtBoat.seats[targetSection][targetIndex]; }
                 if (!sourceVal && !targetVal) { cancelSelection(); return; }
-
-                if (selectedFrom.value !== 'bench') {
-                    const srcBoat = boats.value[selectedBoatIndex.value];
-                    if (['drummer', 'steersman'].includes(selectedFrom.value)) srcBoat.seats[selectedFrom.value] = targetVal;
-                    else srcBoat.seats[selectedFrom.value][selectedIndex.value] = targetVal;
-                }
-                if (targetSection !== 'bench') {
-                    const tgtBoat = boats.value[targetBoatIdx];
-                    const valToPlace = (selectedFrom.value === 'bench') ? {...sourceVal} : sourceVal; 
-                    if (['drummer', 'steersman'].includes(targetSection)) tgtBoat.seats[targetSection] = valToPlace;
-                    else tgtBoat.seats[targetSection][targetIndex] = valToPlace;
-                }
+                if (selectedFrom.value !== 'bench') { const srcBoat = boats.value[selectedBoatIndex.value]; if (['drummer', 'steersman'].includes(selectedFrom.value)) srcBoat.seats[selectedFrom.value] = targetVal; else srcBoat.seats[selectedFrom.value][selectedIndex.value] = targetVal; }
+                if (targetSection !== 'bench') { const tgtBoat = boats.value[targetBoatIdx]; const valToPlace = (selectedFrom.value === 'bench') ? {...sourceVal} : sourceVal; if (['drummer', 'steersman'].includes(targetSection)) tgtBoat.seats[targetSection] = valToPlace; else tgtBoat.seats[targetSection][targetIndex] = valToPlace; }
                 cancelSelection();
             };
-
-            // Helpers
-            const isSelectedOnBoat = () => selectedBoatIndex.value !== null;
-            const isSelectedEmptySeat = () => {
-                if (!isSelectedOnBoat()) return false;
-                const boat = boats.value[selectedBoatIndex.value];
-                const s = selectedFrom.value;
-                const i = selectedIndex.value;
-                try { return (['drummer', 'steersman'].includes(s)) ? boat.seats[s] === null : boat.seats[s][i] === null; } catch (e) { return false; }
-            };
-            const removeSelectedFromBoat = () => {
-                if (!isSelectedOnBoat()) return;
-                const boat = boats.value[selectedBoatIndex.value];
-                if (['drummer', 'steersman'].includes(selectedFrom.value)) boat.seats[selectedFrom.value] = null;
-                else boat.seats[selectedFrom.value][selectedIndex.value] = null;
-                cancelSelection();
-            };
+            const isSelectedEmptySeat = () => { if (!selectedBoatIndex.value === null) return false; const boat = boats.value[selectedBoatIndex.value]; const s = selectedFrom.value; const i = selectedIndex.value; try { return (['drummer', 'steersman'].includes(s)) ? boat.seats[s] === null : boat.seats[s][i] === null; } catch (e) { return false; } };
+            const removeSelectedFromBoat = () => { if (selectedBoatIndex.value === null) return; const boat = boats.value[selectedBoatIndex.value]; if (['drummer', 'steersman'].includes(selectedFrom.value)) boat.seats[selectedFrom.value] = null; else boat.seats[selectedFrom.value][selectedIndex.value] = null; cancelSelection(); };
             const openAddPaddlerModal = (mode) => { addMode.value = mode; newPaddlerName.value = ''; showAddPaddlerModal.value = true; nextTick(() => { if(nameInput.value) nameInput.value.focus(); }); };
-            const confirmAddPaddler = () => {
-                if (!newPaddlerName.value) return;
-                const newGuy = { id: Date.now(), name: newPaddlerName.value, side: newPaddlerSide.value };
-                if (addMode.value === 'bench') bench.value.push(newGuy);
-                else {
-                    const boat = boats.value[selectedBoatIndex.value];
-                    if (['drummer', 'steersman'].includes(selectedFrom.value)) boat.seats[selectedFrom.value] = newGuy;
-                    else boat.seats[selectedFrom.value][selectedIndex.value] = newGuy;
-                    cancelSelection();
-                }
-                showAddPaddlerModal.value = false;
-            };
-            const confirmCreateBoat = () => {
-                const name = newBoatName.value || `新船隊 ${boats.value.length + 1}`;
-                const rows = newBoatType.value === 'big' ? 9 : 5;
-                boats.value.push({ id: Date.now(), name: name, rowCount: rows, seats: createEmptySeats(rows) });
-                currentBoatIndex.value = boats.value.length - 1;
-                showCreateBoatModal.value = false;
-                newBoatName.value = '';
-            };
+            const confirmAddPaddler = () => { if (!newPaddlerName.value) return; const newGuy = { id: Date.now(), name: newPaddlerName.value, side: 'both' }; if (addMode.value === 'bench') bench.value.push(newGuy); else { const boat = boats.value[selectedBoatIndex.value]; if (['drummer', 'steersman'].includes(selectedFrom.value)) boat.seats[selectedFrom.value] = newGuy; else boat.seats[selectedFrom.value][selectedIndex.value] = newGuy; cancelSelection(); } showAddPaddlerModal.value = false; };
+            const confirmCreateBoat = () => { const name = newBoatName.value || `新船隊 ${boats.value.length + 1}`; const rows = newBoatType.value === 'big' ? 9 : 5; boats.value.push({ id: Date.now(), name: name, rowCount: rows, seats: createEmptySeats(rows) }); currentBoatIndex.value = boats.value.length - 1; showCreateBoatModal.value = false; newBoatName.value = ''; };
             const switchBoat = (index) => currentBoatIndex.value = index;
             const cancelSelection = () => { selectedFrom.value = null; selectedIndex.value = null; selectedBoatIndex.value = null; };
-            const getSelectedName = () => {
-                if (selectedFrom.value === 'bench') return bench.value[selectedIndex.value]?.name;
-                if (selectedBoatIndex.value === null) return '';
-                const boat = boats.value[selectedBoatIndex.value];
-                if(!boat) return '';
-                const val = ['drummer', 'steersman'].includes(selectedFrom.value) ? boat.seats[selectedFrom.value] : boat.seats[selectedFrom.value][selectedIndex.value];
-                return val ? val.name : '空位';
-            };
+            const getSelectedName = () => { if (selectedFrom.value === 'bench') return bench.value[selectedIndex.value]?.name; if (selectedBoatIndex.value === null) return ''; const boat = boats.value[selectedBoatIndex.value]; if(!boat) return ''; const val = ['drummer', 'steersman'].includes(selectedFrom.value) ? boat.seats[selectedFrom.value] : boat.seats[selectedFrom.value][selectedIndex.value]; return val ? val.name : '空位'; };
             const countPaddlers = (boat, side) => boat ? boat.seats[side].filter(p => p !== null).length : 0;
-            const countTotal = (boat) => {
-                if(!boat) return 0;
-                let count = 0;
-                if(boat.seats.drummer) count++;
-                if(boat.seats.steersman) count++;
-                count += countPaddlers(boat, 'left');
-                count += countPaddlers(boat, 'right');
-                return count;
-            };
+            const countTotal = (boat) => { if(!boat) return 0; let count = 0; if(boat.seats.drummer) count++; if(boat.seats.steersman) count++; count += countPaddlers(boat, 'left'); count += countPaddlers(boat, 'right'); return count; };
 
             return {
-                boats, currentBoatIndex, currentBoat, bench,
+                boats, currentBoatIndex, currentBoat, bench, availableBench,
                 selectedFrom, selectedIndex, selectedBoatIndex,
-                showAddPaddlerModal, addMode, newPaddlerName, newPaddlerSide, nameInput,
+                showAddPaddlerModal, addMode, newPaddlerName, nameInput,
                 showCreateBoatModal, newBoatName, newBoatType,
                 showSyncModal, syncMethod, csvUrl, isLoading, lastSyncTime,
                 getPaddlerName, getSeatClass, handleBenchClick, handleSeatClick,
                 switchBoat, cancelSelection, getSelectedName,
                 openAddPaddlerModal, confirmAddPaddler, confirmCreateBoat,
-                isSelectedEmptySeat, isSelectedOnBoat, removeSelectedFromBoat,
+                isSelectedEmptySeat, removeSelectedFromBoat,
                 countPaddlers, countTotal, fetchCsvFromUrl, handleFileUpload,
-                openSyncModal, clearStorage, availableDates, selectedDate, loadAttendanceForDate, getAttendanceCount, isOnBoat, clearAllBoats
+                openSyncModal, clearStorage, availableDates, selectedDate, loadAttendanceForDate, getAttendanceCount, isOnBoat, clearAllBoats,
+                quickPlacePaddler
             };
         }
     }).mount('#app');
