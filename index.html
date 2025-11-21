@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Paddle Zelos 戰術板 (Neon Data)</title>
+    <title>Paddle Zelos 戰術板</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -12,24 +12,14 @@
             theme: {
                 extend: {
                     colors: {
-                        // 根據參考圖提取的顏色
-                        neon: {
-                            green: '#39ff14', // 螢光綠 (選中/強調)
-                            blue: '#00f0ff',  // 螢光藍 (科技/輔助)
-                        },
-                        tech: {
-                            bg: '#0a0e17',    // 極深背景
-                            card: '#111827',  // 卡片背景
-                            border: 'rgba(56, 189, 248, 0.2)', // 藍色微光邊框
-                            hover: 'rgba(56, 189, 248, 0.1)'
-                        },
                         dragon: {
-                            danger: '#ff3333', // 鮮紅 (刪除/警告)
+                            dark: '#0f172a',
+                            card: '#1e293b',
+                            accent: '#06b6d4',
+                            danger: '#ef4444',
+                            success: '#22c55e',
+                            water: '#3b82f6'
                         }
-                    },
-                    boxShadow: {
-                        'neon-green': '0 0 10px rgba(57, 255, 20, 0.5), 0 0 20px rgba(57, 255, 20, 0.3)',
-                        'neon-blue': '0 0 10px rgba(0, 240, 255, 0.5), 0 0 20px rgba(0, 240, 255, 0.3)',
                     },
                     animation: { 'spin-slow': 'spin 3s linear infinite' }
                 }
@@ -37,103 +27,62 @@
         }
     </script>
     <style>
-        body { 
-            background-color: #0a0e17; /* 極深背景 */
-            background-image: radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.05) 0%, transparent 50%); /* 微弱頂部藍光 */
-            color: #e5e7eb; /* 淺灰白文字，比純白更舒適 */
-            -webkit-tap-highlight-color: transparent; 
-            font-family: "Inter", system-ui, -apple-system, sans-serif;
-        }
-        
-        /* 科技面板 - 深色、紮實、微光邊框 */
-        .tech-panel {
-            background: rgba(17, 24, 39, 0.8); /* 深色半透明 */
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(0, 240, 255, 0.15); /* 藍色微光邊框 */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-        }
-
-        /* 船身形狀 */
+        body { background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; }
         .boat-shape {
             clip-path: polygon(20% 0%, 80% 0%, 100% 5%, 100% 100%, 0% 100%, 0% 5%);
             transition: all 0.3s ease-in-out;
-            background: rgba(17, 24, 39, 0.95); /* 幾乎不透明的深色船身 */
-            border: 1px solid rgba(0, 240, 255, 0.2);
         }
-
-        .seat-transition { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        /* 螢光綠選取狀態 (參考圖風格) */
-        .selected-seat { 
-            border: 2px solid #39ff14 !important; /* 強烈螢光綠邊框 */
-            box-shadow: 0 0 12px rgba(57, 255, 20, 0.6) !important; /* 綠色光暈 */
-            background-color: rgba(57, 255, 20, 0.1) !important;
-            color: #39ff14 !important;
-            z-index: 20;
+        .seat-transition { transition: all 0.2s ease; }
+        .selected-pulse { animation: pulse-border 1.5s infinite; border-color: #06b6d4 !important; }
+        .selected-empty-pulse { animation: pulse-green 1.5s infinite; border-color: #22c55e !important; border-style: solid !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(6, 182, 212, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
         }
-        
-        /* 空位選取狀態 */
-        .selected-empty { 
-            border: 2px dashed #39ff14 !important;
-            box-shadow: 0 0 8px rgba(57, 255, 20, 0.4) !important;
-            z-index: 20;
-            animation: pulse-green-border 1.5s infinite;
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
-
-        @keyframes pulse-green-border {
-            0%, 100% { border-color: rgba(57, 255, 20, 0.4); }
-            50% { border-color: #39ff14; }
-        }
-
-        /* 一般座位樣式 */
-        .seat-filled {
-            background: rgba(31, 41, 55, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-        .seat-empty {
-            background: rgba(17, 24, 39, 0.5);
-            border: 1px dashed rgba(255, 255, 255, 0.15);
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        /* 自定義下拉選單箭頭 */
         select {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2339ff14' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); /* 綠色箭頭 */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-position: right 0.5rem center;
             background-repeat: no-repeat;
             background-size: 1.2em 1.2em;
             padding-right: 2rem;
             -webkit-appearance: none; appearance: none;
         }
-        option { color: white; background-color: #111827; padding: 8px; }
+        option { color: white; background-color: #0f172a; padding: 8px; }
     </style>
 </head>
 <body>
 
-<div id="app" v-cloak class="min-h-screen flex flex-col pb-36 bg-tech-bg">
-    <header class="tech-panel p-2 sticky top-0 z-50 border-b-0 border-b-tech-border rounded-b-xl mx-1 mt-1">
-        <div class="flex justify-between items-center mb-2 px-1">
+<div id="app" v-cloak class="min-h-screen flex flex-col pb-36">
+    <header class="bg-dragon-card p-2 sticky top-0 z-50 shadow-lg border-b border-slate-700">
+        <div class="flex justify-between items-center mb-2">
             <div class="flex items-center gap-2">
-                <h1 class="font-bold text-sm tracking-wider text-white">Paddle Zelos <span class="text-[10px] text-neon-blue/80 font-normal ml-1">Data</span></h1>
+                <i class="fa-solid fa-dragon text-dragon-accent text-lg"></i>
+                <h1 class="font-bold text-sm tracking-wider">Paddle Zelos 戰術板 <span class="text-[10px] text-slate-400 font-normal hidden xs:inline">(自動存檔)</span></h1>
             </div>
             <div class="flex gap-2">
-                <button @click="clearAllBoats" class="bg-tech-card hover:bg-tech-hover text-dragon-danger px-3 py-1.5 rounded text-[10px] border border-tech-border/50 transition">
+                <button @click="clearAllBoats" class="bg-slate-700 text-red-400 px-2 py-1 rounded text-[10px] border border-slate-600 active:bg-slate-600">
                     <i class="fa-solid fa-trash-can"></i> 清空
                 </button>
-                <button @click="forceRefresh" class="bg-tech-card hover:bg-tech-hover text-neon-blue px-3 py-1.5 rounded text-[10px] border border-tech-border/50 transition shadow-sm shadow-neon-blue/20">
-                    <i :class="['fa-solid', isLoading ? 'fa-circle-notch fa-spin' : 'fa-rotate']"></i> <span v-if="hasPreset">更新</span><span v-else>設定</span>
+                <button @click="forceRefresh" class="bg-slate-700 text-dragon-accent px-2 py-1 rounded text-[10px] border border-slate-600 active:bg-slate-600">
+                    <i :class="['fa-solid', isLoading ? 'fa-circle-notch fa-spin' : 'fa-rotate']"></i> <span v-if="hasPreset">更新名單</span><span v-else>設定</span>
                 </button>
             </div>
         </div>
         
         <div class="relative w-full">
-            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <i class="fa-regular fa-calendar text-neon-green/80 text-xs"></i>
+            <div class="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
+                <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
             </div>
             <select v-model="selectedDate" @change="loadAttendanceForDate" 
-                    class="bg-tech-card border border-tech-border text-white text-xs rounded focus:ring-1 focus:ring-neon-green focus:border-neon-green block w-full pl-9 p-2.5">
+                    class="bg-slate-800 border border-slate-600 text-white text-xs rounded focus:ring-dragon-accent focus:border-dragon-accent block w-full pl-8 p-2">
                 <option value="" disabled>
                     {{ isLoading ? '資料讀取中...' : (availableDates.length > 0 ? '請選擇練習日期...' : '無資料') }}
                 </option>
@@ -144,30 +93,39 @@
         </div>
     </header>
 
-    <div class="flex overflow-x-auto p-1 gap-2 sticky top-[90px] z-40 no-scrollbar px-2 py-2">
+    <div class="flex overflow-x-auto p-1 gap-2 bg-slate-800/90 sticky top-[80px] z-40 backdrop-blur-sm border-b border-slate-700 no-scrollbar">
         <button 
             v-for="(boat, index) in boats" 
             :key="boat.id"
             @click="switchBoat(index)"
-            :class="['px-4 py-1.5 rounded-md whitespace-nowrap text-xs font-bold transition-all border tech-panel', 
-                     currentBoatIndex === index ? 'border-neon-green text-neon-green shadow-neon-green/30' : 'border-tech-border/30 text-slate-400 hover:text-white hover:border-tech-border']"
+            :class="['px-3 py-1 rounded-full whitespace-nowrap text-xs font-bold transition-all border flex items-center gap-1 flex-shrink-0', 
+                     currentBoatIndex === index ? 'bg-dragon-water text-white border-blue-400 shadow-lg shadow-blue-500/30' : 'bg-slate-700 text-slate-400 border-transparent']"
         >
-            <span v-if="selectedBoatIndex === index" class="text-neon-green animate-pulse text-[8px] mr-1">●</span>
+            <span v-if="selectedBoatIndex === index" class="text-dragon-accent animate-pulse text-[8px]">●</span>
             <span>{{ boat.name }}</span>
         </button>
-        <button @click="showCreateBoatModal = true" class="px-3 py-1.5 rounded-md tech-panel text-slate-400 border border-tech-border/30 hover:text-white hover:border-tech-border transition text-xs">
+        <button @click="showCreateBoatModal = true" class="px-3 py-1 rounded-full bg-slate-700 text-slate-400 border border-transparent hover:bg-slate-600 hover:text-white transition flex-shrink-0 text-xs">
             <i class="fa-solid fa-plus"></i>
         </button>
     </div>
 
     <div class="p-2 max-w-md mx-auto w-full flex-grow" v-if="currentBoat">
         
-        <div class="boat-shape p-2 pb-8 relative mx-auto transition-all duration-500"
+        <div class="flex justify-between text-[10px] text-slate-400 mb-2 px-4 bg-slate-800/50 py-2 rounded-lg border border-slate-700/50">
+            <div class="text-center w-10"><div class="text-slate-500 uppercase">L</div><div class="font-bold text-sm text-white">{{ countPaddlers(currentBoat, 'left') }}</div></div>
+            <div class="text-center flex flex-col justify-center">
+                <span class="text-dragon-accent font-bold text-base leading-none">{{ countTotal(currentBoat) }}</span>
+                <span class="text-[8px] uppercase tracking-wide text-slate-500">Total</span>
+            </div>
+            <div class="text-center w-10"><div class="text-slate-500 uppercase">R</div><div class="font-bold text-sm text-white">{{ countPaddlers(currentBoat, 'right') }}</div></div>
+        </div>
+
+        <div class="boat-shape bg-dragon-card border-x-[2px] border-dragon-accent/30 p-2 pb-8 relative shadow-2xl mx-auto transition-all duration-500"
              :style="{ minHeight: currentBoat.rowCount === 9 ? '480px' : '320px' }">
             
             <div class="flex justify-center mb-2">
                 <div @click="handleSeatClick('drummer', 0)" 
-                     :class="['w-10 h-10 rounded-full flex items-center justify-center flex-col cursor-pointer seat-transition relative overflow-hidden shadow-lg', 
+                     :class="['w-10 h-10 rounded-full border-2 flex items-center justify-center flex-col cursor-pointer seat-transition relative overflow-hidden', 
                               getSeatClass('drummer', 0)]">
                     <span class="text-[6px] uppercase font-bold opacity-50 mb-px">Drum</span>
                     <span class="text-[10px] font-bold truncate w-full text-center px-0.5 z-10 relative leading-none">
@@ -176,12 +134,12 @@
                 </div>
             </div>
 
-            <div class="space-y-1.5">
-                <div v-for="row in currentBoat.rowCount" :key="row" class="flex justify-between items-center gap-1.5">
+            <div class="space-y-1">
+                <div v-for="row in currentBoat.rowCount" :key="row" class="flex justify-between items-center gap-1">
                     <div @click="handleSeatClick('left', row-1)" 
-                         :class="['flex-1 h-9 rounded flex items-center justify-between px-1 cursor-pointer seat-transition relative overflow-hidden group shadow-sm',
+                         :class="['flex-1 h-9 rounded border flex items-center justify-between px-1 cursor-pointer seat-transition relative overflow-hidden group',
                                   getSeatClass('left', row-1)]">
-                        <span class="text-[8px] font-mono opacity-30 absolute top-0.5 left-1">{{ row }}L</span>
+                        <span class="text-[8px] font-mono opacity-30 absolute top-0.5 left-0.5">{{ row }}L</span>
                         <span class="font-bold text-xs truncate w-full text-center z-10">{{ getPaddlerName(currentBoat.seats.left[row-1]) }}</span>
                     </div>
 
@@ -190,9 +148,9 @@
                     </div>
 
                     <div @click="handleSeatClick('right', row-1)" 
-                         :class="['flex-1 h-9 rounded flex items-center justify-between px-1 cursor-pointer seat-transition relative overflow-hidden group shadow-sm',
+                         :class="['flex-1 h-9 rounded border flex items-center justify-between px-1 cursor-pointer seat-transition relative overflow-hidden group',
                                   getSeatClass('right', row-1)]">
-                        <span class="text-[8px] font-mono opacity-30 absolute top-0.5 right-1">{{ row }}R</span>
+                        <span class="text-[8px] font-mono opacity-30 absolute top-0.5 right-0.5">{{ row }}R</span>
                         <span class="font-bold text-xs truncate w-full text-center z-10">{{ getPaddlerName(currentBoat.seats.right[row-1]) }}</span>
                     </div>
                 </div>
@@ -200,7 +158,7 @@
 
             <div class="flex justify-center mt-4">
                 <div @click="handleSeatClick('steersman', 0)" 
-                     :class="['w-10 h-10 rounded-full flex items-center justify-center flex-col cursor-pointer seat-transition relative overflow-hidden shadow-lg',
+                     :class="['w-10 h-10 rounded-full border-2 flex items-center justify-center flex-col cursor-pointer seat-transition relative overflow-hidden',
                               getSeatClass('steersman', 0)]">
                     <span class="text-[6px] uppercase font-bold opacity-50 mb-px">Helm</span>
                     <span class="text-[10px] font-bold truncate w-full text-center px-0.5 z-10 relative leading-none">
@@ -211,37 +169,37 @@
         </div>
     </div>
 
-    <div class="fixed bottom-0 left-0 right-0 bg-[#0a0e17]/95 backdrop-blur border-t-2 border-neon-blue/20 pb-8 pt-3 px-4 z-30 rounded-t-2xl shadow-[0_-5px_20px_rgba(0,240,255,0.1)]">
+    <div class="px-4 pt-3 pb-24 border-t border-slate-800 bg-slate-900/95 backdrop-blur mt-auto z-30">
         <div class="flex justify-between items-center mb-2">
-            <h3 class="text-slate-300 font-bold text-[10px] uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-clipboard-user text-neon-blue"></i> 
+            <h3 class="text-slate-400 font-bold text-[10px] uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-clipboard-user"></i> 
                 <span v-if="selectedDate">{{ selectedDate }} ({{ bench.length }})</span>
                 <span v-else>請選日期</span>
             </h3>
-            <button @click="openAddPaddlerModal('bench')" class="text-[10px] px-3 py-1 rounded bg-tech-card border border-tech-border text-slate-300 hover:text-white hover:border-neon-blue/50 transition">
+            <button @click="openAddPaddlerModal('bench')" class="text-[10px] px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition">
                 <i class="fa-solid fa-plus"></i> 臨時人員
             </button>
         </div>
 
-        <div class="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto p-1">
+        <div class="grid grid-cols-4 gap-1.5 max-h-52 overflow-y-auto p-1">
             <div v-for="(paddler, index) in bench" :key="paddler.id" 
                  @click="handleBenchClick(index)"
-                 :class="['p-1 rounded bg-tech-card border border-tech-border/30 text-center cursor-pointer active:scale-95 transition relative min-h-[36px] flex flex-col justify-center select-none',
-                          selectedFrom === 'bench' && selectedIndex === index ? 'selected-seat' : 'hover:border-neon-blue/50 hover:text-white',
-                          isOnBoat(paddler.id) ? 'opacity-25 grayscale' : '']">
+                 :class="['p-1 rounded bg-slate-800 border border-slate-700 text-center cursor-pointer active:scale-95 transition relative min-h-[40px] flex flex-col justify-center select-none',
+                          selectedFrom === 'bench' && selectedIndex === index ? 'ring-2 ring-dragon-accent bg-slate-700 z-10' : 'hover:bg-slate-700',
+                          isOnBoat(paddler.id) ? 'opacity-30 grayscale' : '']">
                 <div class="text-[11px] font-bold truncate w-full">{{ paddler.name }}</div>
                 <div v-if="isOnBoat(paddler.id)" class="absolute inset-0 flex items-center justify-center">
-                    <i class="fa-solid fa-check text-neon-green text-lg drop-shadow"></i>
+                    <i class="fa-solid fa-check text-dragon-success text-lg drop-shadow-md"></i>
                 </div>
             </div>
-            <div v-if="bench.length === 0" class="col-span-4 text-center py-6 text-slate-500 text-xs italic border border-dashed border-tech-border/30 rounded bg-tech-card/50">
+            <div v-if="bench.length === 0" class="col-span-4 text-center py-8 text-slate-500 text-xs italic border border-dashed border-slate-800 rounded bg-slate-900/50">
                 <div v-if="isLoading">
-                    <p><i class="fa-solid fa-circle-notch fa-spin text-neon-blue"></i> 讀取中...</p>
+                    <p><i class="fa-solid fa-circle-notch fa-spin text-dragon-accent"></i> 正在讀取...</p>
                 </div>
                 <div v-else-if="availableDates.length === 0">
-                    <p v-if="hasPreset" class="text-dragon-danger">讀取失敗，請檢查網路。</p>
+                    <p v-if="hasPreset" class="text-red-400">讀取失敗，請檢查網路。</p>
                     <p v-else class="mb-2">尚未設定名單連結</p>
-                    <button v-if="!hasPreset" @click="openSyncModal" class="mt-2 text-neon-blue underline">設定</button>
+                    <button v-if="!hasPreset" @click="openSyncModal" class="mt-2 text-dragon-accent underline">設定</button>
                 </div>
                 <div v-else-if="!selectedDate">
                     <p>☝️ 請選擇日期</p>
@@ -253,23 +211,23 @@
         </div>
     </div>
 
-    <div v-if="showSyncModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-fade-in">
-        <div class="tech-panel p-6 rounded-xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div v-if="showSyncModal" class="fixed inset-0 bg-black/90 z-[80] flex items-center justify-center p-4 animate-fade-in">
+        <div class="bg-slate-800 p-6 rounded-xl w-full max-w-lg border border-slate-600 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-4 text-white flex justify-between items-center">
-                <span><i class="fa-solid fa-rotate mr-2 text-neon-blue"></i>設定</span>
+                <span><i class="fa-solid fa-rotate mr-2 text-dragon-accent"></i>手動設定</span>
                 <button @click="showSyncModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
             </h3>
             
-            <div class="flex gap-2 mb-4 border-b border-tech-border/30 pb-1">
-                <button @click="syncMethod = 'file'" :class="['px-4 py-2 text-sm font-bold border-b-2 transition-colors', syncMethod === 'file' ? 'border-neon-green text-neon-green' : 'border-transparent text-slate-400']">上傳檔案</button>
-                <button @click="syncMethod = 'url'" :class="['px-4 py-2 text-sm font-bold border-b-2 transition-colors', syncMethod === 'url' ? 'border-neon-green text-neon-green' : 'border-transparent text-slate-400']">CSV 連結</button>
+            <div class="flex gap-2 mb-4 border-b border-slate-700 pb-1">
+                <button @click="syncMethod = 'file'" :class="['px-4 py-2 text-sm font-bold border-b-2 transition-colors', syncMethod === 'file' ? 'border-dragon-accent text-dragon-accent' : 'border-transparent text-slate-400']">上傳檔案</button>
+                <button @click="syncMethod = 'url'" :class="['px-4 py-2 text-sm font-bold border-b-2 transition-colors', syncMethod === 'url' ? 'border-dragon-accent text-dragon-accent' : 'border-transparent text-slate-400']">CSV 連結</button>
             </div>
 
             <div v-if="syncMethod === 'file'">
-                <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-tech-border/30 border-dashed rounded-xl cursor-pointer bg-tech-card hover:bg-tech-card/80 transition hover:border-neon-blue/50">
+                <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-900 hover:bg-slate-800 transition">
                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
-                        <p class="text-sm text-slate-300">點擊上傳 CSV</p>
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-500 mb-2"></i>
+                        <p class="text-sm text-slate-400">點擊上傳 CSV</p>
                     </div>
                     <input type="file" class="hidden" accept=".csv" @change="handleFileUpload" />
                 </label>
@@ -277,8 +235,8 @@
 
             <div v-if="syncMethod === 'url'">
                 <input v-model="csvUrl" placeholder="貼上 CSV 連結" 
-                       class="w-full bg-tech-card p-3 rounded-md border border-tech-border/50 text-sm text-white focus:outline-none focus:border-neon-green mb-3 placeholder-slate-500">
-                <button @click="fetchCsvFromUrl" :disabled="isLoading" class="w-full py-3 rounded-md bg-neon-green text-black font-bold shadow-lg shadow-neon-green/20 flex justify-center items-center gap-2 hover:bg-[#2eff00] transition">
+                       class="w-full bg-slate-900 p-3 rounded border border-slate-700 text-sm text-white focus:outline-none focus:border-dragon-accent mb-3">
+                <button @click="fetchCsvFromUrl" :disabled="isLoading" class="w-full py-3 rounded bg-dragon-accent text-black font-bold shadow-lg shadow-cyan-500/20 flex justify-center items-center gap-2">
                     <i v-if="isLoading" class="fa-solid fa-circle-notch fa-spin"></i>
                     <span v-else>同步</span>
                 </button>
@@ -286,82 +244,82 @@
         </div>
     </div>
 
-    <div v-if="showAddPaddlerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center p-4 pb-10 sm:pb-4 animate-fade-in">
-        <div class="tech-panel p-6 rounded-xl w-full max-w-sm shadow-2xl mb-safe">
-            <h3 class="text-xl font-bold mb-4 flex items-center gap-2 text-white">
-                <span v-if="addMode === 'bench'" class="text-neon-blue"><i class="fa-solid fa-user-plus"></i> 新增臨時</span>
-                <span v-else class="text-neon-green"><i class="fa-solid fa-chair"></i> 直接入座</span>
+    <div v-if="showAddPaddlerModal" class="fixed inset-0 bg-black/80 z-[60] flex items-end sm:items-center justify-center p-4 pb-10 sm:pb-4 animate-fade-in">
+        <div class="bg-slate-800 p-6 rounded-xl w-full max-w-sm border border-slate-600 shadow-2xl mb-safe">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <span v-if="addMode === 'bench'" class="text-dragon-accent"><i class="fa-solid fa-user-plus"></i> 新增臨時</span>
+                <span v-else class="text-dragon-success"><i class="fa-solid fa-chair"></i> 直接入座</span>
             </h3>
             <input ref="nameInput" v-model="newPaddlerName" placeholder="輸入姓名..." 
-                   class="w-full bg-tech-card p-4 rounded-md border border-tech-border/50 mb-4 text-white text-lg focus:outline-none focus:border-neon-green placeholder-slate-500"
+                   class="w-full bg-slate-900 p-4 rounded-lg border border-slate-700 mb-4 text-white text-lg focus:outline-none focus:border-dragon-accent placeholder-slate-600"
                    @keyup.enter="confirmAddPaddler">
             
             <div class="flex gap-3">
-                <button @click="showAddPaddlerModal = false" class="flex-1 py-3 rounded-md bg-tech-card border border-tech-border/30 font-bold text-slate-300 hover:text-white transition">取消</button>
-                <button @click="confirmAddPaddler" class="flex-1 py-3 rounded-md bg-neon-green text-black font-bold shadow-lg shadow-neon-green/20 hover:bg-[#2eff00] transition">確認</button>
+                <button @click="showAddPaddlerModal = false" class="flex-1 py-3 rounded-lg bg-slate-700 font-bold text-slate-300">取消</button>
+                <button @click="confirmAddPaddler" class="flex-1 py-3 rounded-lg bg-dragon-accent text-black font-bold shadow-lg shadow-cyan-500/20">確認</button>
             </div>
         </div>
     </div>
 
-    <div v-if="showCreateBoatModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
-        <div class="tech-panel p-6 rounded-xl w-full max-w-sm shadow-2xl">
+    <div v-if="showCreateBoatModal" class="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4">
+        <div class="bg-slate-800 p-6 rounded-xl w-full max-w-sm border border-slate-600 shadow-2xl">
             <h3 class="text-xl font-bold mb-4 text-white">新增龍舟</h3>
             <div class="mb-4">
                 <label class="block text-xs text-slate-400 mb-1">船隊名稱</label>
                 <input v-model="newBoatName" placeholder="例如：混合組 C" 
-                       class="w-full bg-tech-card p-3 rounded-md border border-tech-border/50 text-white focus:outline-none focus:border-neon-green placeholder-slate-500">
+                       class="w-full bg-slate-900 p-3 rounded border border-slate-700 text-white focus:outline-none focus:border-dragon-accent">
             </div>
             <div class="mb-6">
                 <label class="block text-xs text-slate-400 mb-2">船型選擇</label>
                 <div class="grid grid-cols-2 gap-3">
                     <button @click="newBoatType = 'big'" 
-                            :class="['p-4 rounded-md border flex flex-col items-center transition', newBoatType === 'big' ? 'border-neon-green text-neon-green shadow-neon-green/20 bg-neon-green/10' : 'bg-tech-card border-tech-border/30 text-slate-400']">
+                            :class="['p-4 rounded border flex flex-col items-center transition', newBoatType === 'big' ? 'bg-dragon-accent/20 border-dragon-accent text-dragon-accent' : 'bg-slate-900 border-slate-700 text-slate-500']">
                         <span class="text-2xl mb-1"><i class="fa-solid fa-ship"></i></span>
                         <span class="font-bold">大龍 (18人)</span>
                     </button>
                     <button @click="newBoatType = 'small'" 
-                            :class="['p-4 rounded-md border flex flex-col items-center transition', newBoatType === 'small' ? 'border-neon-green text-neon-green shadow-neon-green/20 bg-neon-green/10' : 'bg-tech-card border-tech-border/30 text-slate-400']">
+                            :class="['p-4 rounded border flex flex-col items-center transition', newBoatType === 'small' ? 'bg-dragon-accent/20 border-dragon-accent text-dragon-accent' : 'bg-slate-900 border-slate-700 text-slate-500']">
                         <span class="text-xl mb-1 mt-1"><i class="fa-solid fa-sailboat"></i></span>
                         <span class="font-bold">小龍 (10人)</span>
                     </button>
                 </div>
             </div>
             <div class="flex gap-3">
-                <button @click="showCreateBoatModal = false" class="flex-1 py-3 rounded-md bg-tech-card border border-tech-border/30 text-slate-300 font-bold hover:text-white transition">取消</button>
-                <button @click="confirmCreateBoat" class="flex-1 py-3 rounded-md bg-neon-green text-black font-bold shadow-lg shadow-neon-green/20 hover:bg-[#2eff00] transition">建立</button>
+                <button @click="showCreateBoatModal = false" class="flex-1 py-3 rounded bg-slate-700 text-slate-300 font-bold">取消</button>
+                <button @click="confirmCreateBoat" class="flex-1 py-3 rounded bg-dragon-accent text-black font-bold">建立</button>
             </div>
         </div>
     </div>
 
     <div v-if="selectedFrom" class="fixed bottom-6 left-4 right-4 z-50 flex gap-2 justify-center animate-slide-up max-w-md mx-auto">
         
-        <div v-if="isSelectedEmptySeat()" class="flex-1 flex gap-2 items-center tech-panel p-2 rounded-lg shadow-2xl border border-neon-green/30">
+        <div v-if="isSelectedEmptySeat()" class="flex-1 flex gap-2 items-center bg-slate-800 p-2 rounded-lg shadow-xl border border-slate-600">
             <div class="flex-1 relative">
                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <i class="fa-solid fa-user-plus text-neon-green"></i>
+                    <i class="fa-solid fa-user-plus text-dragon-success"></i>
                 </div>
-                <select @change="quickPlacePaddler($event)" class="w-full bg-tech-card border border-tech-border/50 text-white text-sm rounded focus:ring-neon-green focus:border-neon-green block pl-9 p-2.5 appearance-none">
+                <select @change="quickPlacePaddler($event)" class="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-lg focus:ring-dragon-success focus:border-dragon-success block pl-9 p-2.5 appearance-none">
                     <option selected disabled value="">快速入座 ({{ availableBench.length }}人)</option>
                     <option value="NEW">+ 新增臨時人員</option>
                     <option v-for="p in availableBench" :key="p.id" :value="JSON.stringify(p)">{{ p.name }}</option>
                 </select>
             </div>
-            <button @click="cancelSelection" class="bg-tech-card border border-tech-border/30 text-white w-10 h-10 rounded flex items-center justify-center hover:bg-tech-hover transition">
+            <button @click="cancelSelection" class="bg-slate-600 text-white w-10 h-10 rounded flex items-center justify-center hover:bg-slate-500">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
         <div v-else class="flex gap-2 w-full">
-            <div class="tech-panel text-white px-4 py-3 rounded-lg shadow-2xl border border-neon-green/30 flex flex-col justify-center items-start flex-1 min-w-0">
-                <span class="text-[10px] text-neon-green uppercase tracking-wider">已選取</span>
-                <span class="font-bold truncate w-full text-white flex items-center text-sm shadow-sm">
-                    <i class="fa-solid fa-check-circle mr-2 text-neon-green"></i> {{ getSelectedName() }}
+            <div class="bg-slate-800 text-white px-4 py-3 rounded-lg shadow-xl border border-slate-600 flex flex-col justify-center items-start flex-1 min-w-0">
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider">已選取</span>
+                <span class="font-bold truncate w-full text-dragon-accent flex items-center text-sm">
+                    <i class="fa-solid fa-check-circle mr-2"></i> {{ getSelectedName() }}
                 </span>
             </div>
-            <button @click="removeSelectedFromBoat" class="bg-dragon-danger/90 border border-red-500/30 text-white px-4 py-3 rounded-lg shadow-xl font-bold hover:bg-red-600 transition flex items-center gap-2 whitespace-nowrap">
+            <button @click="removeSelectedFromBoat" class="bg-dragon-danger text-white px-4 py-3 rounded-lg shadow-xl font-bold hover:bg-red-600 transition flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-arrow-down"></i> <span class="hidden xs:inline">下船</span>
             </button>
-            <button @click="cancelSelection" class="bg-tech-card border border-tech-border/30 text-white px-4 py-3 rounded-lg shadow-xl font-bold whitespace-nowrap hover:bg-tech-hover transition">
+            <button @click="cancelSelection" class="bg-slate-600 text-white px-4 py-3 rounded-lg shadow-xl font-bold whitespace-nowrap active:bg-slate-500">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -439,7 +397,7 @@
 
             // --- Initialization ---
             onMounted(() => {
-                loadState();
+                loadState(); // Load saved boats arrangement immediately
 
                 if (PRESET_CSV_URL && PRESET_CSV_URL.length > 10) {
                     hasPreset.value = true;
@@ -448,6 +406,7 @@
                     const savedData = localStorage.getItem('dragon_csv_data');
                     if (savedData) {
                         parseCSV(savedData);
+                        // Restore selected date logic handled in parseCSV or loadState
                         fetchCsvFromUrl(true); 
                     } else {
                         fetchCsvFromUrl();
@@ -520,7 +479,7 @@
 
             const openSyncModal = () => {
                 if(hasPreset.value) {
-                    if(confirm("要立即從雲端更新名單嗎？")) {
+                    if(confirm("您已經設定了自動同步連結，要立即更新名單嗎？")) {
                         fetchCsvFromUrl();
                     }
                 } else {
@@ -595,24 +554,20 @@
 
             const loadAttendanceForDate = () => { if (!selectedDate.value || !attendanceDB.value[selectedDate.value]) return; bench.value = JSON.parse(JSON.stringify(attendanceDB.value[selectedDate.value])); cancelSelection(); };
             const getAttendanceCount = (date) => attendanceDB.value[date] ? attendanceDB.value[date].length : 0;
-            const clearAllBoats = () => { if(!confirm("確定要清空所有排位嗎？\n(這會覆蓋暫存)")) return; boats.value.forEach(boat => { boat.seats.drummer=null; boat.seats.steersman=null; boat.seats.left.fill(null); boat.seats.right.fill(null); }); };
+            const clearAllBoats = () => { if(!confirm("確定要清空所有排位嗎？\n(這會覆蓋您的暫存紀錄)")) return; boats.value.forEach(boat => { boat.seats.drummer=null; boat.seats.steersman=null; boat.seats.left.fill(null); boat.seats.right.fill(null); }); };
 
             // --- Interaction ---
             const getPaddlerName = (paddler) => paddler ? paddler.name : (paddler === null ? '' : '-');
-            
             const getSeatClass = (section, index) => {
                 if (!currentBoat.value) return '';
                 const boat = currentBoat.value;
                 if ((section === 'left' || section === 'right') && boat.seats[section][index] === undefined) return 'opacity-0 pointer-events-none';
                 const isSelectedHere = selectedBoatIndex.value === currentBoatIndex.value && selectedFrom.value === section && selectedIndex.value === index;
                 let content = (section === 'drummer' || section === 'steersman') ? boat.seats[section] : boat.seats[section][index];
-                
-                // Tech Seat Styles
-                if (isSelectedHere) return content ? 'selected-seat' : 'selected-empty';
-                if (content) return 'seat-filled';
-                return 'seat-empty hover:border-neon-blue/50 transition';
+                if (isSelectedHere) return content ? 'bg-dragon-accent text-black border-dragon-accent selected-pulse z-20 shadow-lg' : 'bg-slate-800 border-dragon-success text-dragon-success selected-empty-pulse z-20 shadow-lg';
+                if (content) return 'bg-slate-700 text-white border-slate-500 shadow-md';
+                return 'bg-slate-900/30 text-slate-600 border-dashed border-slate-800 hover:border-slate-600';
             };
-
             const handleBenchClick = (index) => { if (selectedFrom.value === 'bench' && selectedIndex.value === index) cancelSelection(); else if (selectedFrom.value) executeSwap('bench', index, null); else { selectedFrom.value = 'bench'; selectedIndex.value = index; selectedBoatIndex.value = null; } };
             const handleSeatClick = (section, index) => { if (selectedBoatIndex.value === currentBoatIndex.value && selectedFrom.value === section && selectedIndex.value === index) { cancelSelection(); return; } if (selectedFrom.value) executeSwap(section, index, currentBoatIndex.value); else { selectedFrom.value = section; selectedIndex.value = index; selectedBoatIndex.value = currentBoatIndex.value; } };
             
