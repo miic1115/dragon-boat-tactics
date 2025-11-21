@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>龍舟戰術板 V7 - 全能槳手版</title>
+    <title>Paddle Zelos 戰術板</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -21,9 +21,7 @@
                             water: '#3b82f6'
                         }
                     },
-                    animation: {
-                        'spin-slow': 'spin 3s linear infinite',
-                    }
+                    animation: { 'spin-slow': 'spin 3s linear infinite' }
                 }
             }
         }
@@ -53,8 +51,8 @@
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-position: right 0.5rem center;
             background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
-            padding-right: 2.5rem;
+            background-size: 1.2em 1.2em;
+            padding-right: 2rem;
             -webkit-appearance: none; appearance: none;
         }
         option { color: white; background-color: #0f172a; padding: 8px; }
@@ -63,29 +61,31 @@
 <body>
 
 <div id="app" v-cloak class="min-h-screen flex flex-col pb-36">
-    <header class="bg-dragon-card p-3 sticky top-0 z-50 shadow-lg border-b border-slate-700">
+    <header class="bg-dragon-card p-2 sticky top-0 z-50 shadow-lg border-b border-slate-700">
         <div class="flex justify-between items-center mb-2">
             <div class="flex items-center gap-2">
-                <i class="fa-solid fa-dragon text-dragon-accent text-xl"></i>
-                <h1 class="font-bold text-base tracking-wider">戰術板 V7</h1>
+                <i class="fa-solid fa-dragon text-dragon-accent text-lg"></i>
+                <h1 class="font-bold text-sm tracking-wider">Paddle Zelos 戰術板 <span class="text-[10px] text-slate-400 font-normal hidden xs:inline">(自動存檔)</span></h1>
             </div>
             <div class="flex gap-2">
-                <button @click="clearAllBoats" class="bg-slate-700 text-red-400 px-2 py-1 rounded text-xs border border-slate-600 active:bg-slate-600">
+                <button @click="clearAllBoats" class="bg-slate-700 text-red-400 px-2 py-1 rounded text-[10px] border border-slate-600 active:bg-slate-600">
                     <i class="fa-solid fa-trash-can"></i> 清空
                 </button>
-                <button @click="openSyncModal" class="bg-slate-700 text-dragon-accent px-2 py-1 rounded text-xs border border-slate-600 active:bg-slate-600">
-                    <i :class="['fa-solid', isLoading ? 'fa-circle-notch fa-spin' : 'fa-rotate']"></i> 同步/上傳
+                <button @click="forceRefresh" class="bg-slate-700 text-dragon-accent px-2 py-1 rounded text-[10px] border border-slate-600 active:bg-slate-600">
+                    <i :class="['fa-solid', isLoading ? 'fa-circle-notch fa-spin' : 'fa-rotate']"></i> <span v-if="hasPreset">更新名單</span><span v-else>設定</span>
                 </button>
             </div>
         </div>
         
         <div class="relative w-full">
-            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <i class="fa-regular fa-calendar text-slate-400"></i>
+            <div class="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
+                <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
             </div>
             <select v-model="selectedDate" @change="loadAttendanceForDate" 
-                    class="bg-slate-800 border border-slate-600 text-white text-sm rounded-lg focus:ring-dragon-accent focus:border-dragon-accent block w-full pl-10 p-2.5">
-                <option value="" disabled>請選擇練習日期...</option>
+                    class="bg-slate-800 border border-slate-600 text-white text-xs rounded focus:ring-dragon-accent focus:border-dragon-accent block w-full pl-8 p-2">
+                <option value="" disabled>
+                    {{ isLoading ? '資料讀取中...' : (availableDates.length > 0 ? '請選擇練習日期...' : '無資料') }}
+                </option>
                 <option v-for="date in availableDates" :key="date" :value="date">
                     {{ date }} ({{ getAttendanceCount(date) }}人)
                 </option>
@@ -93,78 +93,75 @@
         </div>
     </header>
 
-    <div class="flex overflow-x-auto p-2 gap-2 bg-slate-800/90 sticky top-[88px] z-40 backdrop-blur-sm border-b border-slate-700 no-scrollbar">
+    <div class="flex overflow-x-auto p-1 gap-2 bg-slate-800/90 sticky top-[80px] z-40 backdrop-blur-sm border-b border-slate-700 no-scrollbar">
         <button 
             v-for="(boat, index) in boats" 
             :key="boat.id"
             @click="switchBoat(index)"
-            :class="['px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-bold transition-all border flex items-center gap-2 flex-shrink-0', 
+            :class="['px-3 py-1 rounded-full whitespace-nowrap text-xs font-bold transition-all border flex items-center gap-1 flex-shrink-0', 
                      currentBoatIndex === index ? 'bg-dragon-water text-white border-blue-400 shadow-lg shadow-blue-500/30' : 'bg-slate-700 text-slate-400 border-transparent']"
         >
-            <span v-if="selectedBoatIndex === index" class="text-dragon-accent animate-pulse text-[8px] mr-[-4px]">●</span>
+            <span v-if="selectedBoatIndex === index" class="text-dragon-accent animate-pulse text-[8px]">●</span>
             <span>{{ boat.name }}</span>
-            <span class="text-[8px] px-1 py-0.5 rounded bg-black/20 ml-1">
-                {{ boat.rowCount === 9 ? '大' : '小' }}
-            </span>
         </button>
-        <button @click="showCreateBoatModal = true" class="px-3 py-1.5 rounded-full bg-slate-700 text-slate-400 border border-transparent hover:bg-slate-600 hover:text-white transition flex-shrink-0">
+        <button @click="showCreateBoatModal = true" class="px-3 py-1 rounded-full bg-slate-700 text-slate-400 border border-transparent hover:bg-slate-600 hover:text-white transition flex-shrink-0 text-xs">
             <i class="fa-solid fa-plus"></i>
         </button>
     </div>
 
-    <div class="p-4 max-w-md mx-auto w-full flex-grow" v-if="currentBoat">
+    <div class="p-2 max-w-md mx-auto w-full flex-grow" v-if="currentBoat">
         
-        <div class="flex justify-between text-xs text-slate-400 mb-4 px-4 bg-slate-800/50 py-3 rounded-xl border border-slate-700/50">
-            <div class="text-center w-16"><div class="text-slate-500 text-[10px] uppercase">Left</div><div class="font-bold text-lg text-white">{{ countPaddlers(currentBoat, 'left') }}</div></div>
+        <div class="flex justify-between text-[10px] text-slate-400 mb-2 px-4 bg-slate-800/50 py-2 rounded-lg border border-slate-700/50">
+            <div class="text-center w-10"><div class="text-slate-500 uppercase">L</div><div class="font-bold text-sm text-white">{{ countPaddlers(currentBoat, 'left') }}</div></div>
             <div class="text-center flex flex-col justify-center">
-                <span class="text-dragon-accent font-bold text-xl leading-none">{{ countTotal(currentBoat) }}</span>
-                <span class="text-[9px] uppercase tracking-wide text-slate-500">Total</span>
+                <span class="text-dragon-accent font-bold text-base leading-none">{{ countTotal(currentBoat) }}</span>
+                <span class="text-[8px] uppercase tracking-wide text-slate-500">Total</span>
             </div>
-            <div class="text-center w-16"><div class="text-slate-500 text-[10px] uppercase">Right</div><div class="font-bold text-lg text-white">{{ countPaddlers(currentBoat, 'right') }}</div></div>
+            <div class="text-center w-10"><div class="text-slate-500 uppercase">R</div><div class="font-bold text-sm text-white">{{ countPaddlers(currentBoat, 'right') }}</div></div>
         </div>
 
-        <div class="boat-shape bg-dragon-card border-x-[3px] border-dragon-accent/30 p-4 pb-10 relative shadow-2xl mx-auto transition-all duration-500"
-             :style="{ minHeight: currentBoat.rowCount === 9 ? '600px' : '400px' }">
+        <div class="boat-shape bg-dragon-card border-x-[2px] border-dragon-accent/30 p-2 pb-8 relative shadow-2xl mx-auto transition-all duration-500"
+             :style="{ minHeight: currentBoat.rowCount === 9 ? '480px' : '320px' }">
             
-            <div class="flex justify-center mb-4">
+            <div class="flex justify-center mb-2">
                 <div @click="handleSeatClick('drummer', 0)" 
-                     :class="['w-14 h-14 rounded-full border-2 flex items-center justify-center flex-col cursor-pointer seat-transition relative overflow-hidden', 
+                     :class="['w-10 h-10 rounded-full border-2 flex items-center justify-center flex-col cursor-pointer seat-transition relative overflow-hidden', 
                               getSeatClass('drummer', 0)]">
-                    <span class="text-[8px] uppercase font-bold opacity-50 mb-0.5">Drum</span>
-                    <span class="text-xs font-bold truncate w-full text-center px-1 z-10 relative">
+                    <span class="text-[6px] uppercase font-bold opacity-50 mb-px">Drum</span>
+                    <span class="text-[10px] font-bold truncate w-full text-center px-0.5 z-10 relative leading-none">
                         {{ getPaddlerName(currentBoat.seats.drummer) }}
                     </span>
                 </div>
             </div>
 
-            <div class="space-y-2">
-                <div v-for="row in currentBoat.rowCount" :key="row" class="flex justify-between items-center gap-2">
+            <div class="space-y-1">
+                <div v-for="row in currentBoat.rowCount" :key="row" class="flex justify-between items-center gap-1">
                     <div @click="handleSeatClick('left', row-1)" 
-                         :class="['flex-1 h-12 rounded border flex items-center justify-between px-2 cursor-pointer seat-transition relative overflow-hidden group',
+                         :class="['flex-1 h-9 rounded border flex items-center justify-between px-1 cursor-pointer seat-transition relative overflow-hidden group',
                                   getSeatClass('left', row-1)]">
-                        <span class="text-[10px] font-mono opacity-30 absolute top-1 left-1">{{ row }}L</span>
-                        <span class="font-bold text-sm truncate w-full text-center z-10">{{ getPaddlerName(currentBoat.seats.left[row-1]) }}</span>
+                        <span class="text-[8px] font-mono opacity-30 absolute top-0.5 left-0.5">{{ row }}L</span>
+                        <span class="font-bold text-xs truncate w-full text-center z-10">{{ getPaddlerName(currentBoat.seats.left[row-1]) }}</span>
                     </div>
 
-                    <div class="w-4 flex justify-center">
-                        <span class="text-[10px] text-slate-600 font-mono">{{ row }}</span>
+                    <div class="w-3 flex justify-center">
+                        <span class="text-[8px] text-slate-600 font-mono">{{ row }}</span>
                     </div>
 
                     <div @click="handleSeatClick('right', row-1)" 
-                         :class="['flex-1 h-12 rounded border flex items-center justify-between px-2 cursor-pointer seat-transition relative overflow-hidden group',
+                         :class="['flex-1 h-9 rounded border flex items-center justify-between px-1 cursor-pointer seat-transition relative overflow-hidden group',
                                   getSeatClass('right', row-1)]">
-                        <span class="text-[10px] font-mono opacity-30 absolute top-1 right-1">{{ row }}R</span>
-                        <span class="font-bold text-sm truncate w-full text-center z-10">{{ getPaddlerName(currentBoat.seats.right[row-1]) }}</span>
+                        <span class="text-[8px] font-mono opacity-30 absolute top-0.5 right-0.5">{{ row }}R</span>
+                        <span class="font-bold text-xs truncate w-full text-center z-10">{{ getPaddlerName(currentBoat.seats.right[row-1]) }}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="flex justify-center mt-8">
+            <div class="flex justify-center mt-4">
                 <div @click="handleSeatClick('steersman', 0)" 
-                     :class="['w-14 h-14 rounded-full border-2 flex items-center justify-center flex-col cursor-pointer seat-transition relative overflow-hidden',
+                     :class="['w-10 h-10 rounded-full border-2 flex items-center justify-center flex-col cursor-pointer seat-transition relative overflow-hidden',
                               getSeatClass('steersman', 0)]">
-                    <span class="text-[8px] uppercase font-bold opacity-50 mb-0.5">Helm</span>
-                    <span class="text-xs font-bold truncate w-full text-center px-1 z-10 relative">
+                    <span class="text-[6px] uppercase font-bold opacity-50 mb-px">Helm</span>
+                    <span class="text-[10px] font-bold truncate w-full text-center px-0.5 z-10 relative leading-none">
                         {{ getPaddlerName(currentBoat.seats.steersman) }}
                     </span>
                 </div>
@@ -172,40 +169,43 @@
         </div>
     </div>
 
-    <div class="px-4 pt-4 pb-24 border-t border-slate-800 bg-slate-900/95 backdrop-blur mt-auto z-30">
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="text-slate-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+    <div class="px-4 pt-3 pb-24 border-t border-slate-800 bg-slate-900/95 backdrop-blur mt-auto z-30">
+        <div class="flex justify-between items-center mb-2">
+            <h3 class="text-slate-400 font-bold text-[10px] uppercase tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-clipboard-user"></i> 
-                <span v-if="selectedDate">{{ selectedDate }} 出席名單 ({{ bench.length }})</span>
-                <span v-else>請選擇上方日期</span>
+                <span v-if="selectedDate">{{ selectedDate }} ({{ bench.length }})</span>
+                <span v-else>請選日期</span>
             </h3>
             <button @click="openAddPaddlerModal('bench')" class="text-[10px] px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition">
                 <i class="fa-solid fa-plus"></i> 臨時人員
             </button>
         </div>
 
-        <div class="grid grid-cols-4 gap-2 max-h-60 overflow-y-auto p-1">
+        <div class="grid grid-cols-4 gap-1.5 max-h-52 overflow-y-auto p-1">
             <div v-for="(paddler, index) in bench" :key="paddler.id" 
                  @click="handleBenchClick(index)"
-                 :class="['p-1.5 rounded bg-slate-800 border border-slate-700 text-center cursor-pointer active:scale-95 transition relative min-h-[45px] flex flex-col justify-center select-none',
+                 :class="['p-1 rounded bg-slate-800 border border-slate-700 text-center cursor-pointer active:scale-95 transition relative min-h-[40px] flex flex-col justify-center select-none',
                           selectedFrom === 'bench' && selectedIndex === index ? 'ring-2 ring-dragon-accent bg-slate-700 z-10' : 'hover:bg-slate-700',
                           isOnBoat(paddler.id) ? 'opacity-30 grayscale' : '']">
-                <div class="text-xs font-bold truncate w-full">{{ paddler.name }}</div>
+                <div class="text-[11px] font-bold truncate w-full">{{ paddler.name }}</div>
                 <div v-if="isOnBoat(paddler.id)" class="absolute inset-0 flex items-center justify-center">
                     <i class="fa-solid fa-check text-dragon-success text-lg drop-shadow-md"></i>
                 </div>
             </div>
             <div v-if="bench.length === 0" class="col-span-4 text-center py-8 text-slate-500 text-xs italic border border-dashed border-slate-800 rounded bg-slate-900/50">
-                <div v-if="availableDates.length === 0">
-                    <p class="mb-2"><i class="fa-solid fa-triangle-exclamation text-yellow-500 text-xl"></i></p>
-                    <p>尚未載入名單</p>
-                    <button @click="openSyncModal" class="mt-2 text-dragon-accent underline">點此上傳或同步</button>
+                <div v-if="isLoading">
+                    <p><i class="fa-solid fa-circle-notch fa-spin text-dragon-accent"></i> 正在讀取...</p>
+                </div>
+                <div v-else-if="availableDates.length === 0">
+                    <p v-if="hasPreset" class="text-red-400">讀取失敗，請檢查網路。</p>
+                    <p v-else class="mb-2">尚未設定名單連結</p>
+                    <button v-if="!hasPreset" @click="openSyncModal" class="mt-2 text-dragon-accent underline">設定</button>
                 </div>
                 <div v-else-if="!selectedDate">
-                    <p>☝️ 請點擊最上方的日期選單</p>
+                    <p>☝️ 請選擇日期</p>
                 </div>
                 <div v-else>
-                    <p>這一天無人報名 😴</p>
+                    <p>無人報名 😴</p>
                 </div>
             </div>
         </div>
@@ -214,38 +214,32 @@
     <div v-if="showSyncModal" class="fixed inset-0 bg-black/90 z-[80] flex items-center justify-center p-4 animate-fade-in">
         <div class="bg-slate-800 p-6 rounded-xl w-full max-w-lg border border-slate-600 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold mb-4 text-white flex justify-between items-center">
-                <span><i class="fa-solid fa-rotate mr-2 text-dragon-accent"></i>同步設定</span>
+                <span><i class="fa-solid fa-rotate mr-2 text-dragon-accent"></i>手動設定</span>
                 <button @click="showSyncModal = false" class="text-slate-400 hover:text-white"><i class="fa-solid fa-times"></i></button>
             </h3>
             
             <div class="flex gap-2 mb-4 border-b border-slate-700 pb-1">
-                <button @click="syncMethod = 'file'" :class="['px-4 py-2 text-sm font-bold border-b-2 transition-colors', syncMethod === 'file' ? 'border-dragon-accent text-dragon-accent' : 'border-transparent text-slate-400']">上傳檔案 (推薦)</button>
-                <button @click="syncMethod = 'url'" :class="['px-4 py-2 text-sm font-bold border-b-2 transition-colors', syncMethod === 'url' ? 'border-dragon-accent text-dragon-accent' : 'border-transparent text-slate-400']">自動同步</button>
+                <button @click="syncMethod = 'file'" :class="['px-4 py-2 text-sm font-bold border-b-2 transition-colors', syncMethod === 'file' ? 'border-dragon-accent text-dragon-accent' : 'border-transparent text-slate-400']">上傳檔案</button>
+                <button @click="syncMethod = 'url'" :class="['px-4 py-2 text-sm font-bold border-b-2 transition-colors', syncMethod === 'url' ? 'border-dragon-accent text-dragon-accent' : 'border-transparent text-slate-400']">CSV 連結</button>
             </div>
 
             <div v-if="syncMethod === 'file'">
-                <p class="text-xs text-slate-400 mb-3">請上傳「出席統計表」CSV：</p>
                 <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-900 hover:bg-slate-800 transition">
                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
                         <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-500 mb-2"></i>
-                        <p class="text-sm text-slate-400"><span class="font-bold">點擊上傳</span> CSV</p>
+                        <p class="text-sm text-slate-400">點擊上傳 CSV</p>
                     </div>
                     <input type="file" class="hidden" accept=".csv" @change="handleFileUpload" />
                 </label>
             </div>
 
             <div v-if="syncMethod === 'url'">
-                <input v-model="csvUrl" placeholder="貼上 Google Sheets CSV 連結" 
+                <input v-model="csvUrl" placeholder="貼上 CSV 連結" 
                        class="w-full bg-slate-900 p-3 rounded border border-slate-700 text-sm text-white focus:outline-none focus:border-dragon-accent mb-3">
                 <button @click="fetchCsvFromUrl" :disabled="isLoading" class="w-full py-3 rounded bg-dragon-accent text-black font-bold shadow-lg shadow-cyan-500/20 flex justify-center items-center gap-2">
                     <i v-if="isLoading" class="fa-solid fa-circle-notch fa-spin"></i>
-                    <span v-else>開始同步</span>
+                    <span v-else>同步</span>
                 </button>
-            </div>
-
-            <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between items-center">
-                <span class="text-xs text-slate-500" v-if="lastSyncTime">上次: {{ lastSyncTime }}</span>
-                <button @click="clearStorage" class="text-xs text-red-400 hover:text-red-300">清除設定</button>
             </div>
         </div>
     </div>
@@ -253,7 +247,7 @@
     <div v-if="showAddPaddlerModal" class="fixed inset-0 bg-black/80 z-[60] flex items-end sm:items-center justify-center p-4 pb-10 sm:pb-4 animate-fade-in">
         <div class="bg-slate-800 p-6 rounded-xl w-full max-w-sm border border-slate-600 shadow-2xl mb-safe">
             <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <span v-if="addMode === 'bench'" class="text-dragon-accent"><i class="fa-solid fa-user-plus"></i> 新增臨時人員</span>
+                <span v-if="addMode === 'bench'" class="text-dragon-accent"><i class="fa-solid fa-user-plus"></i> 新增臨時</span>
                 <span v-else class="text-dragon-success"><i class="fa-solid fa-chair"></i> 直接入座</span>
             </h3>
             <input ref="nameInput" v-model="newPaddlerName" placeholder="輸入姓名..." 
@@ -305,7 +299,7 @@
                     <i class="fa-solid fa-user-plus text-dragon-success"></i>
                 </div>
                 <select @change="quickPlacePaddler($event)" class="w-full bg-slate-900 border border-slate-700 text-white text-sm rounded-lg focus:ring-dragon-success focus:border-dragon-success block pl-9 p-2.5 appearance-none">
-                    <option selected disabled value="">快速入座 ({{ availableBench.length }}人待命)</option>
+                    <option selected disabled value="">快速入座 ({{ availableBench.length }}人)</option>
                     <option value="NEW">+ 新增臨時人員</option>
                     <option v-for="p in availableBench" :key="p.id" :value="JSON.stringify(p)">{{ p.name }}</option>
                 </select>
@@ -334,7 +328,13 @@
 </div>
 
 <script>
-    const { createApp, ref, computed, nextTick, onMounted } = Vue;
+    const { createApp, ref, computed, nextTick, onMounted, watch } = Vue;
+
+    // ==========================================
+    // 🔥 設定區：請在這裡貼上你的 Google CSV 連結
+    // ==========================================
+    const PRESET_CSV_URL = ''; 
+    // 例如： 'https://docs.google.com/spreadsheets/d/e/......./pub?output=csv'
 
     createApp({
         setup() {
@@ -350,15 +350,14 @@
             const availableDates = ref([]);
             const selectedDate = ref("");
             const bench = ref([]);
+            const hasPreset = ref(false);
             
-            // Sync State
             const showSyncModal = ref(false);
             const syncMethod = ref('file');
             const csvUrl = ref('');
             const isLoading = ref(false);
             const lastSyncTime = ref('');
 
-            // UI State
             const currentBoatIndex = ref(0);
             const showAddPaddlerModal = ref(false);
             const showCreateBoatModal = ref(false);
@@ -373,23 +372,58 @@
 
             const currentBoat = computed(() => boats.value[currentBoatIndex.value] || null);
 
+            // --- SAVE & LOAD STATE (LocalStorage) ---
+            const saveState = () => {
+                try {
+                    localStorage.setItem('dragon_boats_state', JSON.stringify(boats.value));
+                    localStorage.setItem('dragon_selected_date', selectedDate.value);
+                } catch (e) { console.error("Save failed", e); }
+            };
+
+            const loadState = () => {
+                const savedBoats = localStorage.getItem('dragon_boats_state');
+                if (savedBoats) {
+                    try {
+                        boats.value = JSON.parse(savedBoats);
+                    } catch (e) { console.error("Load failed", e); }
+                }
+                const savedDate = localStorage.getItem('dragon_selected_date');
+                if (savedDate) selectedDate.value = savedDate;
+            };
+
+            // Watch for changes in boats to Auto-Save
+            watch(boats, () => { saveState(); }, { deep: true });
+            watch(selectedDate, () => { saveState(); });
+
             // --- Initialization ---
             onMounted(() => {
-                const savedUrl = localStorage.getItem('dragon_csv_url');
-                const savedData = localStorage.getItem('dragon_csv_data');
-                const savedTime = localStorage.getItem('dragon_sync_time');
-                
-                if (savedUrl) csvUrl.value = savedUrl;
-                if (savedTime) lastSyncTime.value = savedTime;
+                loadState(); // Load saved boats arrangement immediately
 
-                if (savedData) {
-                    parseCSV(savedData);
-                } else if (savedUrl) {
-                    fetchCsvFromUrl(); 
+                if (PRESET_CSV_URL && PRESET_CSV_URL.length > 10) {
+                    hasPreset.value = true;
+                    csvUrl.value = PRESET_CSV_URL;
+                    
+                    const savedData = localStorage.getItem('dragon_csv_data');
+                    if (savedData) {
+                        parseCSV(savedData);
+                        // Restore selected date logic handled in parseCSV or loadState
+                        fetchCsvFromUrl(true); 
+                    } else {
+                        fetchCsvFromUrl();
+                    }
                 } else {
-                    showSyncModal.value = true; 
+                    const savedUrl = localStorage.getItem('dragon_csv_url');
+                    const savedData = localStorage.getItem('dragon_csv_data');
+                    if (savedUrl) csvUrl.value = savedUrl;
+                    if (savedData) parseCSV(savedData);
+                    else showSyncModal.value = true;
                 }
             });
+
+            const forceRefresh = () => {
+                if(hasPreset.value) fetchCsvFromUrl();
+                else showSyncModal.value = true;
+            }
 
             // --- Helper: Check if paddler is on ANY boat ---
             const isOnBoat = (paddlerId) => {
@@ -402,7 +436,6 @@
                 return false;
             };
 
-            // --- Computed: Available Bench Players (Not on boat) ---
             const availableBench = computed(() => {
                 return bench.value.filter(p => !isOnBoat(p.id));
             });
@@ -412,25 +445,20 @@
                 const value = event.target.value;
                 if (value === "NEW") {
                     openAddPaddlerModal('seat');
-                    event.target.value = ""; // Reset select
+                    event.target.value = "";
                     return;
                 }
-                
                 if (!value) return;
-
                 try {
                     const paddler = JSON.parse(value);
                     const boat = boats.value[selectedBoatIndex.value];
-                    
                     if (['drummer', 'steersman'].includes(selectedFrom.value)) {
                         boat.seats[selectedFrom.value] = paddler;
                     } else {
                         boat.seats[selectedFrom.value][selectedIndex.value] = paddler;
                     }
                     cancelSelection();
-                } catch (e) {
-                    console.error("Quick place error", e);
-                }
+                } catch (e) { console.error("Quick place error", e); }
             };
 
             // --- CSV / Sync Logic ---
@@ -446,34 +474,49 @@
                 parseCSV(text);
                 localStorage.setItem('dragon_csv_data', text);
                 const now = new Date().toLocaleString();
-                localStorage.setItem('dragon_sync_time', now);
                 lastSyncTime.value = now;
             };
 
-            const openSyncModal = () => showSyncModal.value = true;
-            const fetchCsvFromUrl = async () => {
+            const openSyncModal = () => {
+                if(hasPreset.value) {
+                    if(confirm("您已經設定了自動同步連結，要立即更新名單嗎？")) {
+                        fetchCsvFromUrl();
+                    }
+                } else {
+                    showSyncModal.value = true;
+                }
+            };
+
+            const fetchCsvFromUrl = async (isBackground = false) => {
                 if (!csvUrl.value) return;
                 const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(csvUrl.value);
-                isLoading.value = true;
+                if(!isBackground) isLoading.value = true;
                 try {
                     const res = await fetch(proxyUrl);
                     if (!res.ok) throw new Error("Network err");
                     const text = await res.text();
                     if (!text || text.length < 10) throw new Error("Empty data");
                     processCsvText(text);
-                    localStorage.setItem('dragon_csv_url', csvUrl.value);
-                    showSyncModal.value = false;
-                    alert("同步成功！");
-                } catch (e) { alert("同步失敗，請改用檔案上傳。"); } finally { isLoading.value = false; }
+                    if(!hasPreset.value) localStorage.setItem('dragon_csv_url', csvUrl.value);
+                    if(!isBackground) {
+                        showSyncModal.value = false;
+                        alert("同步成功！名單已更新。");
+                    }
+                } catch (e) { 
+                    if(!isBackground) alert("同步失敗，請檢查網路或連結。"); 
+                } finally { 
+                    if(!isBackground) isLoading.value = false; 
+                }
             };
+
             const clearStorage = () => {
                 if(!confirm("清除設定？")) return;
-                localStorage.removeItem('dragon_csv_url'); localStorage.removeItem('dragon_csv_data'); localStorage.removeItem('dragon_sync_time');
-                attendanceDB.value = {}; availableDates.value = []; bench.value = []; selectedDate.value = ''; csvUrl.value = ''; lastSyncTime.value = '';
+                localStorage.removeItem('dragon_csv_url'); localStorage.removeItem('dragon_csv_data');
+                attendanceDB.value = {}; availableDates.value = []; bench.value = []; selectedDate.value = ''; 
+                if(!hasPreset.value) csvUrl.value = '';
                 alert("已重置");
             };
 
-            // --- CSV Parsing (Simplified - No Side Logic) ---
             const parseCSV = (csvText) => {
                 const lines = csvText.trim().split(/\r?\n/); 
                 if (lines.length < 10) return;
@@ -501,6 +544,7 @@
                 availableDates.value = validDateCols.map(d => d.date).reverse();
                 if (availableDates.value.length > 0 && !selectedDate.value) { selectedDate.value = availableDates.value[0]; loadAttendanceForDate(); }
             };
+
             const isName = (str) => {
                 if(!str) return false;
                 if(['on going', 'NaN', 'undefined', '出席名單'].includes(str)) return false;
@@ -510,7 +554,7 @@
 
             const loadAttendanceForDate = () => { if (!selectedDate.value || !attendanceDB.value[selectedDate.value]) return; bench.value = JSON.parse(JSON.stringify(attendanceDB.value[selectedDate.value])); cancelSelection(); };
             const getAttendanceCount = (date) => attendanceDB.value[date] ? attendanceDB.value[date].length : 0;
-            const clearAllBoats = () => { if(!confirm("清空座位？")) return; boats.value.forEach(boat => { boat.seats.drummer=null; boat.seats.steersman=null; boat.seats.left.fill(null); boat.seats.right.fill(null); }); };
+            const clearAllBoats = () => { if(!confirm("確定要清空所有排位嗎？\n(這會覆蓋您的暫存紀錄)")) return; boats.value.forEach(boat => { boat.seats.drummer=null; boat.seats.steersman=null; boat.seats.left.fill(null); boat.seats.right.fill(null); }); };
 
             // --- Interaction ---
             const getPaddlerName = (paddler) => paddler ? paddler.name : (paddler === null ? '' : '-');
@@ -538,7 +582,7 @@
                 if (targetSection !== 'bench') { const tgtBoat = boats.value[targetBoatIdx]; const valToPlace = (selectedFrom.value === 'bench') ? {...sourceVal} : sourceVal; if (['drummer', 'steersman'].includes(targetSection)) tgtBoat.seats[targetSection] = valToPlace; else tgtBoat.seats[targetSection][targetIndex] = valToPlace; }
                 cancelSelection();
             };
-            const isSelectedEmptySeat = () => { if (!selectedBoatIndex.value === null) return false; const boat = boats.value[selectedBoatIndex.value]; const s = selectedFrom.value; const i = selectedIndex.value; try { return (['drummer', 'steersman'].includes(s)) ? boat.seats[s] === null : boat.seats[s][i] === null; } catch (e) { return false; } };
+            const isSelectedEmptySeat = () => { if (selectedBoatIndex.value === null) return false; const boat = boats.value[selectedBoatIndex.value]; const s = selectedFrom.value; const i = selectedIndex.value; try { return (['drummer', 'steersman'].includes(s)) ? boat.seats[s] === null : boat.seats[s][i] === null; } catch (e) { return false; } };
             const removeSelectedFromBoat = () => { if (selectedBoatIndex.value === null) return; const boat = boats.value[selectedBoatIndex.value]; if (['drummer', 'steersman'].includes(selectedFrom.value)) boat.seats[selectedFrom.value] = null; else boat.seats[selectedFrom.value][selectedIndex.value] = null; cancelSelection(); };
             const openAddPaddlerModal = (mode) => { addMode.value = mode; newPaddlerName.value = ''; showAddPaddlerModal.value = true; nextTick(() => { if(nameInput.value) nameInput.value.focus(); }); };
             const confirmAddPaddler = () => { if (!newPaddlerName.value) return; const newGuy = { id: Date.now(), name: newPaddlerName.value, side: 'both' }; if (addMode.value === 'bench') bench.value.push(newGuy); else { const boat = boats.value[selectedBoatIndex.value]; if (['drummer', 'steersman'].includes(selectedFrom.value)) boat.seats[selectedFrom.value] = newGuy; else boat.seats[selectedFrom.value][selectedIndex.value] = newGuy; cancelSelection(); } showAddPaddlerModal.value = false; };
@@ -561,7 +605,7 @@
                 isSelectedEmptySeat, removeSelectedFromBoat,
                 countPaddlers, countTotal, fetchCsvFromUrl, handleFileUpload,
                 openSyncModal, clearStorage, availableDates, selectedDate, loadAttendanceForDate, getAttendanceCount, isOnBoat, clearAllBoats,
-                quickPlacePaddler
+                quickPlacePaddler, hasPreset, forceRefresh
             };
         }
     }).mount('#app');
